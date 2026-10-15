@@ -1,14 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Captain's Cabin</title>
+  <title>Night Shift</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <canvas class="webgl"></canvas>
+
+  <div class="start">
+    <h1>NIGHT SHIFT</h1>
+    <p class="story">14 november 1989. Je bent nachtwaker en zit aan het bureau van Marc,<br>die drie nachten geleden verdween tijdens zijn shift.<br>Zijn computer staat nog aan.</p>
+    <p class="hint">Laden…</p>
+    <p class="controls">Sleep om rond te kijken · klik op voorwerpen · Esc om terug te gaan</p>
+  </div>
+
+  <div class="fade"></div>
+
+  <div class="end">
+    <h1>NIGHT SHIFT</h1>
+    <p>Je bent ontsnapt.</p>
+    <p class="stats">
+      Shift beëindigd om 03:30<br>
+      Jouw tijd: <span class="time">00:00</span><br>
+      Foute pogingen: <span class="wrong">0</span>
+    </p>
+    <p class="clock">03:30:00</p>
+    <button class="restart">[ OPNIEUW SPELEN ]</button>
+  </div>
+
   <script type="module" src="js/script.js"></script>
 </body>
 </html>

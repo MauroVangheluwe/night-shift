@@ -2,12 +2,16 @@
 {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 html,
 body
 {
     overflow: hidden;
+    background: #000;
+    color: #7dff9b;
+    font-family: 'VT323', 'Courier New', monospace;
 }
 
 .webgl
@@ -16,4 +20,129 @@ body
     top: 0;
     left: 0;
     outline: none;
+    touch-action: none;
+}
+
+.start,
+.end
+{
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(2, 10, 5, 0.88);
+    transition: opacity 0.8s;
+}
+
+h1
+{
+    font-size: clamp(3rem, 9vw, 6rem);
+    letter-spacing: 0.3em;
+    font-weight: 400;
+    text-shadow: 0 0 18px rgba(125, 255, 155, 0.6);
+}
+
+.story
+{
+    font-size: 1.5rem;
+    line-height: 1.3;
+    color: #b8f5c6;
+}
+
+.hint
+{
+    font-size: 1.8rem;
+}
+
+.start.ready
+{
+    cursor: pointer;
+}
+
+.start.ready .hint
+{
+    animation: blink 1.2s steps(2) infinite;
+}
+
+.controls
+{
+    font-size: 1.2rem;
+    color: #3f9a58;
+}
+
+.start.hidden
+{
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes blink
+{
+    50% { opacity: 0; }
+}
+
+.fade
+{
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 2.5s ease-in;
+}
+
+.fade.white
+{
+    opacity: 1;
+}
+
+.end
+{
+    background: #f4f4f0;
+    color: #111;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.end.visible
+{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.end h1
+{
+    text-shadow: none;
+}
+
+.end p
+{
+    font-size: 1.8rem;
+    line-height: 1.4;
+}
+
+.end .clock
+{
+    font-size: 1.4rem;
+    color: #777;
+}
+
+.restart
+{
+    font: inherit;
+    font-size: 1.8rem;
+    background: none;
+    border: none;
+    color: #111;
+    cursor: pointer;
+}
+
+.restart:hover
+{
+    text-decoration: underline;
 }
