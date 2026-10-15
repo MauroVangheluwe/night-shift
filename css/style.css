@@ -146,3 +146,70 @@ h1
 {
     text-decoration: underline;
 }
+
+.time-stamp
+{
+    font-size: 1.4rem;
+    color: #3f9a58;
+    letter-spacing: 0.15em;
+}
+
+.thought
+{
+    position: fixed;
+    left: 50%;
+    bottom: 6vh;
+    transform: translateX(-50%);
+    max-width: 90vw;
+    font-size: 1.5rem;
+    color: #e8e3d2;
+    text-shadow: 0 0 6px #000, 0 0 12px #000;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+}
+
+.thought.visible
+{
+    opacity: 1;
+}
+
+.inventory
+{
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    background: rgba(10, 10, 10, 0.55);
+    border: 2px solid rgba(216, 178, 90, 0.6);
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+}
+
+.inventory.visible
+{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.mute
+{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font: inherit;
+    font-size: 1.1rem;
+    color: #7dff9b;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid #2f7a44;
+    padding: 4px 10px;
+    cursor: pointer;
+    z-index: 5;
+}
