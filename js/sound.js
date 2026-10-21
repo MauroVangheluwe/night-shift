@@ -131,7 +131,7 @@ export const granted = () => {
 export const radio = () => {
   if (!ctx) return
   burst(1.2, { volume: 0.12, freq: 1800, q: 0.7, attack: 0.02 })
-  tone(420, 0.25, { type: 'sawtooth', volume: 0.02, start: now() + 0.5, slideTo: 300 }) // one garbled word
+  tone(420, 0.25, { type: 'sawtooth', volume: 0.02, start: now() + 0.5, slideTo: 300 })
 }
 export const swell = (seconds) => {
   if (!ctx) return
@@ -158,7 +158,6 @@ let tickTimer = null
 const startAmbience = () => {
   if (startAmbience.started) return
   startAmbience.started = true
-  // distant thunder / passing car every 40 to 90 seconds
   const rumble = () => {
     burst(3.5, { volume: 0.06, freq: 120, q: 0.6, type: 'lowpass', attack: 0.8 })
     setTimeout(rumble, 40000 + Math.random() * 50000)

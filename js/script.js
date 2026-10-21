@@ -33,11 +33,11 @@ const scene = new THREE.Scene()
 scene.background = new THREE.Color('#000000')
 const camera = new THREE.PerspectiveCamera(65, size.width / size.height, 0.03, 50)
 camera.rotation.order = 'YXZ'
-scene.add(camera) // the inspected objects hang in front of the camera
+scene.add(camera)
 
 // CAM 04: a second camera in the corner renders this room (live) into a texture
 const cam04 = new THREE.PerspectiveCamera(70, 4 / 3, 0.05, 30)
-cam04.layers.enable(1) // layer 1 = the figure on the chair, only visible for this camera
+cam04.layers.enable(1)
 const cam04Target = new THREE.RenderTarget(480, 360)
 
 // ---------- uniforms (TSL nodes, we update their .value every frame) ----------
@@ -163,7 +163,6 @@ const setup = async () => {
     document.fonts.load('34px "VT323"'), document.fonts.load('34px "Caveat"'),
   ])
   camImages = images.slice(0, 3)
-  // textures on glTF meshes use flipY = false (like the baked texture)
   ;[screens.postIt, screens.logbook, screens.corkboard, screens.keyCabinet, screens.doorSign].forEach((c) => { c.texture.flipY = false })
   screens.drawProps()
   screens.drawLightSpot()
@@ -194,13 +193,11 @@ const setup = async () => {
   objects.Figure.traverse((c) => c.layers.set(1))
   objects.Figure_Head.traverse((c) => c.layers.set(1))
 
-  // paper faces that move together with their object
   objects.Logbook.attach(objects.Logbook_Face)
   objects.Corkboard.attach(objects.Corkboard_Face)
   addPaper(objects.Notebook, screens.notebookPage.texture, screens.notebookBack.texture, 0.15, 0.2, 0.0115)
   addPaper(objects.Badge, screens.badge.texture, null, 0.08, 0.11, 0.0025)
-  objects.KeyCabinet_Face.position.x -= 0.006 // in front of the panel, not inside it
-  // the cabinet's back sat exactly on the wall (z-fighting): pull it a bit off the wall
+  objects.KeyCabinet_Face.position.x -= 0.006
   ;[objects.KeyCabinet, objects.KeyCabinet_Face].forEach((o) => { if (o.parent !== objects.KeyCabinet) o.position.x -= 0.012 })
   objects.Clock.attach(objects.Hand_Hour)
   objects.Clock.attach(objects.Hand_Min)
@@ -208,16 +205,13 @@ const setup = async () => {
   scene.add(room)
   room.updateMatrixWorld(true)
 
-  // the drawer carries its contents (and later the key)
   objects.Drawer.attach(objects.Notebook)
   objects.Drawer.attach(objects.Badge)
   objects.Drawer.attach(objects.Drawer_Lock)
 
-  // the key starts inside the mug (hidden), we remember where the lock is
   state.keyLock = { position: objects.Key.position.clone(), quaternion: objects.Key.quaternion.clone(), parent: objects.Key.parent }
   objects.Key.visible = false
 
-  // warm light spot for the turned lamp, on the wall in the dark corner
   const spot = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({
     map: screens.lightSpot.texture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0,
   }))
@@ -226,7 +220,6 @@ const setup = async () => {
   objects.Spot = spot
   scene.add(spot)
 
-  // clickable things: [name, roots, action]
   ;[
     ['PostIt', objects.PostIt, 'inspect'], ['Mug', objects.Mug, 'inspect'], ['Notebook', objects.Notebook, 'inspect'],
     ['Logbook', objects.Logbook, 'inspect'], ['Badge', objects.Badge, 'inspect'], ['Clock', objects.Clock, 'inspect'],
@@ -239,12 +232,10 @@ const setup = async () => {
     ['Coat', objects.Coat, 'coat'], ['KeyCabinet', objects.KeyCabinet, 'keycabinet'],
   ].forEach(([name, roots, action]) => addInteractive(name, roots, action))
 
-  // animations made in Blender
   mixer = new THREE.AnimationMixer(room)
   gltf.animations.forEach((clip) => {
     actions[clip.name] = mixer.clipAction(clip)
     if (clip.name !== 'ClockTick') actions[clip.name].setLoop(THREE.LoopOnce)
-    // these stay in their end pose; the rattle and the flicker let go, so they don't fight with the others
     if (['DrawerOpen', 'KeyTurn', 'LampTurn', 'DoorOpen'].includes(clip.name)) actions[clip.name].clampWhenFinished = true
   })
 
@@ -262,7 +253,6 @@ const setMaterial = (object, material) => {
   object.traverse((child) => { if (child.isMesh) child.material = material })
 }
 
-// a paper plane with a canvas texture on top (and optionally below) a flat prop
 const addPaper = (object, frontTex, backTex, w, h, top) => {
   const front = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: frontTex }))
   front.rotation.x = -Math.PI / 2
@@ -272,27 +262,25 @@ const addPaper = (object, frontTex, backTex, w, h, top) => {
     const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: backTex }))
     back.rotation.x = Math.PI / 2
     back.rotation.z = Math.PI
-    back.position.y = -top - 0.002 // just below the cover, not inside it
+    back.position.y = -top - 0.002
     object.add(back)
   }
 }
 
-const LIFT = { Drawer: [0.55, '#9a6c48', 0.16], Walkie: [0.55, '#8a8a8a', 0.12] } // [gamma, colour, minimum brightness]
+const LIFT = { Drawer: [0.55, '#9a6c48', 0.16], Walkie: [0.55, '#8a8a8a', 0.12] }
 const addInteractive = (name, roots, action) => {
   roots = Array.isArray(roots) ? roots : [roots]
   const materials = []
   roots.forEach((root) => root.traverse((child) => {
-    child.userData.interactive ??= name // objects inside the drawer keep their own name
+    child.userData.interactive ??= name
     if (!child.isMesh) return
     if (child.material === bakedMaterial && LIFT[name]) {
-      // these spots came out of the bake almost black: lift the brightness (gamma) so you can see them.
-      // Only the brightness is used, so the JPEG colour noise in the dark parts is not blown up.
       const [gamma, tint, floor] = LIFT[name]
       child.material = new THREE.MeshBasicNodeMaterial()
       child.material.colorNode = luminance(texture(bakedTexture).rgb).pow(gamma).mul(1 - floor).add(floor).mul(color(tint)).mul(materialColor)
       materials.push(child.material)
     } else if (child.material === bakedMaterial) {
-      child.material = bakedMaterial.clone() // own material, so only this object lights up
+      child.material = bakedMaterial.clone()
       materials.push(child.material)
     } else if (!child.material.isNodeMaterial && !materials.includes(child.material)) {
       child.material.userData.base = child.material.color.clone()
@@ -378,9 +366,7 @@ const updateHover = () => {
   const pulse = 1.25 + Math.sin(performance.now() * 0.006) * 0.25
   Object.values(interactive).forEach((item) => {
     let glow = item.name === name ? 1.45 : 1
-    // the drawer lights up as soon as you have the key, the hint system highlights the next step
     if (item.name === 'Drawer' && flags.hasKey && !flags.drawerUnlocked) glow = Math.max(glow, pulse)
-    // the open drawer (and what lies in it) is out of the baked shadow, so light it up
     const inDrawer = item.name === 'Drawer' || ((item.name === 'Notebook' || item.name === 'Badge') && objects[item.name].parent === objects.Drawer)
     if (inDrawer && flags.drawerOpen) glow = Math.max(glow, 1.5)
     if (item.name === 'Key' && objects.Key.visible && !flags.hasKey) glow = Math.max(glow, pulse + 0.3)
@@ -419,7 +405,7 @@ const actionsByType = {
     inspect(item.roots[0])
   },
   key: () => {
-    if (flags.drawerUnlocked) return actionsByType.drawer() // the key sits in the lock now
+    if (flags.drawerUnlocked) return actionsByType.drawer()
     if (!objects.Key.visible) return
     sound.keyPick()
     objects.Key.visible = false
@@ -442,7 +428,6 @@ const actionsByType = {
   computer: () => zoomTo('computer', objects.Screen, 0.42),
   lamp: () => toggleLampHead(),
   walkie: () => {
-    // the walkie-talkie is the hint button: the dispatcher gives a tip for the next step
     sound.radio()
     const tips = {
       PostIt: 'Er hangt iets geel op je computer… over.',
@@ -535,7 +520,6 @@ const uninspect = async () => {
   state.mode = 'look'
 }
 
-// turn the mug upside down: the key falls out
 const checkMugFlip = () => {
   if (!inspected || inspected.name !== 'Mug' || flags.keyDropped) return
   const mugUp = new THREE.Vector3(0, 1, 0).applyQuaternion(inspected.getWorldQuaternion(new THREE.Quaternion()))
@@ -546,7 +530,6 @@ const dropKey = async () => {
   flags.keyDropped = true
   progress()
   sound.mugClink()
-  // the key slides out of the mug (still in front of you) and falls on the desk
   const key = objects.Key
   const mug = inspected
   scene.attach(key)
@@ -559,18 +542,16 @@ const dropKey = async () => {
   const fromQ = key.quaternion.clone()
   const toQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0.6))
   const from = start.clone()
-  // the camera glances at the desk while the key drops
   const camQ = camera.quaternion.clone()
   const lookQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(camera.position, land, new THREE.Vector3(0, 1, 0)))
   state.mode = 'busy'
   tween(0.5, (t) => camera.quaternion.slerpQuaternions(camQ, lookQ, t))
   await tween(0.55, (t) => {
     key.position.lerpVectors(from, land, t)
-    key.position.y += Math.sin(t * Math.PI) * 0.12 // a small arc
+    key.position.y += Math.sin(t * Math.PI) * 0.12
     key.quaternion.slerpQuaternions(fromQ, toQ, t)
   })
   sound.tink()
-  // a tiny bounce
   await tween(0.18, (t) => { key.position.y = land.y + Math.sin(t * Math.PI) * 0.012 })
   sound.tink()
   think('Er viel een sleuteltje uit!', 3)
@@ -582,7 +563,6 @@ const dropKey = async () => {
 const unlockDrawer = async () => {
   state.mode = 'busy'
   $inventory.classList.remove('visible')
-  // put the key back in the lock, turn it, open the drawer
   const key = objects.Key
   state.keyLock.parent.add(key)
   key.position.copy(state.keyLock.position)
@@ -596,7 +576,6 @@ const unlockDrawer = async () => {
   progress()
   state.mode = 'look'
   toggleDrawer()
-  // the emergency power hiccups
   setTint(0.45)
   await wait(0.12)
   setTint(1)
@@ -609,7 +588,6 @@ const toggleDrawer = () => {
   if (flags.drawerOpen && !flags.notebookRead) think('Een notitieboekje en een badge.')
 }
 
-// play a "once" animation forwards (open) or backwards (close)
 const playToggle = (action, forward) => {
   action.paused = false
   action.timeScale = forward ? 1 : -1
@@ -633,7 +611,6 @@ const toggleLampHead = async () => {
     flags.scratchSeen = true
     progress()
     think('Daar, in de hoek… iets gekrast in de muur.', 4)
-    // spooky: a door slams on CAM 02
     state.slamUntil = performance.now() + 400
     if (state.cam === 1) sound.slam()
   }
@@ -674,7 +651,6 @@ const switchCam = (dir) => {
   state.cam = (state.cam + dir + 4) % 4
   state.staticUntil = performance.now() + 180
   if (state.cam === 2 && !flags.archiveSeen) { flags.archiveSeen = true; progress() }
-  // once, a face flashes between two cameras
   if (!faceShown && flags.drawerUnlocked && Math.random() < 0.5) {
     faceShown = true
     state.faceUntil = performance.now() + 120
@@ -688,7 +664,7 @@ const drawMonitorFeed = () => {
     return
   }
   let flicker = 1
-  if (state.cam === 1) flicker = Math.random() < 0.06 ? 0.35 : 1 // the corridor tube flickers
+  if (state.cam === 1) flicker = Math.random() < 0.06 ? 0.35 : 1
   if (state.cam === 1 && t < (state.slamUntil || 0)) flicker = 0.2
   const face = t < (state.faceUntil || 0)
   screens.drawMonitor(state.cam, camImages[state.cam], { flicker, face })
@@ -729,7 +705,6 @@ const pressScreen = (hitUv) => {
 const submitCode = () => {
   if (state.digits.every((d, i) => d === CODE[i])) return twist()
   state.wrong++
-  // the right digits turn green, the wrong ones red
   state.digitColors = state.digits.map((d, i) => (d === CODE[i] ? '#7dff9b' : '#ff4b4b'))
   state.message = 'TOEGANG GEWEIGERD'
   state.messageColor = '#ff4b4b'
@@ -754,10 +729,9 @@ const twist = async () => {
   objects.Door_LED.traverse((c) => { if (c.isMesh) c.material.color.set('#2bff5a') })
   await wait(1.2)
 
-  // step back so the monitor is in view; it switches to CAM 04 by itself
   zoomBack(-0.3, -0.05)
   await wait(0.7)
-  state.mode = 'twist' // the mouse now moves the head of the figure on CAM 04
+  state.mode = 'twist'
   state.cam = 3
   state.live = true
   setMaterial(objects.Monitor_Screen, liveMaterial)
@@ -777,7 +751,6 @@ const twist = async () => {
   await write(0, 'Welkom terug, Marc.')
   await wait(1.2)
 
-  // glitch to the max + the lamp flickers out
   sound.swell(1.4)
   tween(1.4, (t) => { uGlitch.value = t })
   await wait(1.2)
@@ -788,7 +761,6 @@ const twist = async () => {
   }
   await wait(0.9)
 
-  // a dry click: turn towards the door, it swings open, white light
   sound.doorUnlock()
   const doorPos = objects.Door.getWorldPosition(new THREE.Vector3())
   doorPos.y = eye.y
@@ -798,7 +770,7 @@ const twist = async () => {
   objects.Door_Light.visible = true
   sound.creak()
   actions.DoorOpen.reset().play()
-  actions.ClockTick.play() // time moves again
+  actions.ClockTick.play()
   await wait(1.3)
   $fade.classList.add('white')
   await wait(2.8)
@@ -854,7 +826,6 @@ $start.addEventListener('click', async () => {
   if (!$start.classList.contains('ready')) return
   sound.initSound()
   $start.classList.add('hidden')
-  // the power flickers back on
   for (const tint of [0, 0.4, 0, 0.8, 0.2, 1]) {
     setTint(tint)
     await wait(0.09)
@@ -864,7 +835,7 @@ $start.addEventListener('click', async () => {
   state.startTime = performance.now()
   progress()
   setTimeout(() => {
-    if (flags.codeSolved) return // not during the twist or on the end screen
+    if (flags.codeSolved) return
     sound.radio(); think('…de walkie-talkie kraakt. Misschien heeft de centrale een tip?', 5) }, 30000)
 })
 
@@ -894,11 +865,10 @@ const draw = (timestamp) => {
   if (state.mode === 'look' && now - state.lastProgress > 60000) safetyNet()
   if (mixer) mixer.update(delta)
 
-  // live CAM 04: the figure turns its head with your mouse
   if (state.live) {
     objects.Figure_Head.rotation.y = -ndc.x * 0.9
     objects.Figure_Head.rotation.x = ndc.y * 0.3
-    objects.Monitor_Screen.visible = false // never render the monitor into its own texture
+    objects.Monitor_Screen.visible = false
     renderer.setRenderTarget(cam04Target)
     renderer.render(scene, cam04)
     renderer.setRenderTarget(null)
@@ -916,13 +886,9 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-// the WGSL shaders need WebGPU (Chrome / Edge / Safari 26)
 if (!navigator.gpu) {
   $start.querySelector('.hint').textContent = 'Deze ervaring heeft WebGPU nodig. Open de pagina in Chrome of Edge.'
 } else {
   setup()
   renderer.setAnimationLoop(draw)
 }
-
-// test helper, only in the local dev server (not in the online build)
-if (import.meta.env.DEV) window.__ns = { state, flags, objects, interactive, actionsByType, look, submitCode, zoomTo, switchCam, toggleLampHead, inspect, uninspect }

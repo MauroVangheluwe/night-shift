@@ -1,6 +1,4 @@
-// Everything that is drawn on a 2D canvas: the computer terminal, the security monitor,
-// and the paper props (post-it, notebook, logbook, badge, corkboard, labels).
-// The canvases are used as textures - the screens go through the Shadertoy shaders as iChannel0.
+// 2D canvases used as textures: terminal, security monitor and paper props
 import * as THREE from 'three/webgpu'
 
 const GREEN = '#7dff9b'
@@ -131,7 +129,6 @@ export const drawMonitor = (index, image, { flicker = 1, face = false, restored 
     ctx.drawImage(image, 0, 0, 640, 480)
     ctx.filter = 'none'
   } else {
-    // no signal: grey noise blocks
     for (let i = 0; i < 1400; i++) {
       const v = Math.floor(Math.random() * 160)
       ctx.fillStyle = `rgb(${v},${v},${v})`
@@ -147,7 +144,6 @@ export const drawMonitor = (index, image, { flicker = 1, face = false, restored 
     ctx.textAlign = 'left'
   }
   if (face) {
-    // a pale face, for a split second
     ctx.fillStyle = 'rgba(230,230,230,0.85)'
     ctx.beginPath(); ctx.ellipse(330, 230, 70, 95, 0, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#000'
@@ -255,7 +251,7 @@ export const drawProps = () => {
     const ry = 130 + i * 84
     drawIcon(ctx, icon, 46, ry - 12, 40, INK)
     if (digit === '?') {
-      ctx.fillRect(84, ry - 2, 26, 4) // an empty slot to fill in
+      ctx.fillRect(84, ry - 2, 26, 4)
     } else {
       ctx.font = `bold 34px ${MONO}`
       ctx.fillText(digit, 88, ry)
